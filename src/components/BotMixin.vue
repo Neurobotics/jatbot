@@ -9,7 +9,11 @@ export default defineComponent({
       person: null,
       messageLog: '',
       messages: [],
-      messageCount: 0
+      messageCount: 0,
+      externalPreprocess: false,
+      externalPostprocess: false,
+      externalAnswer: false,
+      externalServer: 'http://127.0.0.1:1807'
     }
   },
   methods: {
@@ -46,6 +50,48 @@ export default defineComponent({
       return x
     },
     parseMessage: function (val) {
+      const msg = this.performPreprocess(val)
+
+      this.messageLog = '<div class="input">&gt; ' + msg + '</div>' + this.messageLog
+      this.messages.push({ text: msg, user: true, time: new Date(), index: this.messageCount++ })
+
+      const funcLocalPostproc = (m, ans) => {
+        const ans3 = this.performPostprocess(m, ans)
+        this.messageLog = '<div class="output">' + ans3 + '</div>' + this.messageLog
+        this.messages.push({ text: ans3, user: false, time: new Date(), index: this.messageCount++ })
+      }
+      const funcLocalAnswer = (m) => {
+        const ans2 = this.performAnswer(m)
+        funcLocalPostproc(m, ans2)
+      }
+
+      if (this.externalAnswer) {
+        this.$axios.get(this.externalServer + '?answer=' + msg).then(res => {
+          funcLocalPostproc(msg, res.data)
+        }).catch(() => {
+          funcLocalAnswer(msg)
+        })
+      } else {
+        funcLocalAnswer(msg)
+      }
+    },
+    applyDS: function (txt) {
+      const p = this.person
+      if (typeof txt === 'undefined') txt = ''
+      if (!p || txt === '') return txt
+      const ds = p.content.datasets
+      for (let i = 0; i < ds.length; i++) {
+        const dataset = ds[i]
+        if (!dataset) continue
+        const inclusion = '#' + dataset.title.toLowerCase() + '#'
+        while (txt.indexOf(inclusion) >= 0) {
+          const r = this.$jat.getRandomFromLines(dataset.entries)
+          txt = txt.replace(inclusion, r)
+        }
+      }
+      return txt
+    },
+    performPreprocess: function (val) {
       const p = this.person
       if (!p) return
       let msg = val.trim().toLowerCase().replaceAll(',', ' ').replaceAll('.', ' ').replaceAll('  ', ' ').replaceAll('  ', ' ')
@@ -60,9 +106,10 @@ export default defineComponent({
           console.error(e)
         }
       }
-      this.messageLog = '<div class="input">&gt; ' + msg + '</div>' + this.messageLog
-      this.messages.push({ text: msg, user: true, time: new Date(), index: this.messageCount++ })
-
+      return msg
+    },
+    performAnswer: function (msg) {
+      const p = this.person
       const responses = p.content.responses
       const n = responses.length
       let foundAnswer = false
@@ -82,7 +129,6 @@ export default defineComponent({
         }
         if (foundAnswer) break
       }
-
       // Looking for responses inside input
       if (!foundAnswer) {
         for (let i = 0; i < n; i++) {
@@ -91,6 +137,7 @@ export default defineComponent({
           const inputs = r.input.split('\n')
           for (let j = 0; j < inputs.length; j++) {
             const input = inputs[j].toLowerCase().trim()
+            if (input === '') continue
             if (msg.indexOf(input) >= 0) {
               foundAnswer = true
               answer = this.$jat.getRandomFromLines(r.output)
@@ -104,7 +151,10 @@ export default defineComponent({
         console.log('No answer')
         answer = this.$jat.getRandomFromLines(p.content.unanswers)
       }
-      // Post-processing
+      return answer
+    },
+    performPostprocess: function (msg, answer) {
+      const p = this.person
       if (p.content.postprocess) {
         // eslint-disable-next-line
         const f = new Function('return ' + 'function (answer, input) { ' + p.content.postprocess + '}')()
@@ -117,25 +167,7 @@ export default defineComponent({
       }
       answer = this.applyDS(answer)
       answer = this.applyFunctions(answer)
-      this.messageLog = '<div class="output">' + answer + '</div>' + this.messageLog
-      this.messages.push({ text: answer, user: false, time: new Date(), index: this.messageCount++ })
-      // this.$axios.get('http://127.0.0.1:40809/text=' + answer)
-    },
-    applyDS: function (txt) {
-      const p = this.person
-      if (typeof txt === 'undefined') txt = ''
-      if (!p || txt === '') return txt
-      const ds = p.content.datasets
-      for (let i = 0; i < ds.length; i++) {
-        const dataset = ds[i]
-        if (!dataset) continue
-        const inclusion = '#' + dataset.title.toLowerCase() + '#'
-        while (txt.indexOf(inclusion) >= 0) {
-          const r = this.$jat.getRandomFromLines(dataset.entries)
-          txt = txt.replace(inclusion, r)
-        }
-      }
-      return txt
+      return answer
     },
     applyFunctions: function (txt) {
       const p = this.person
