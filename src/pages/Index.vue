@@ -75,9 +75,9 @@
 
     <q-page-container>
       <template v-if="person">
-          <q-input dense stack-label label="Название" placeholder="[Без названия]" v-model="person.title" class="q-ma-md"/>
-          <q-input dense stack-label label="Описание" placeholder="[Без названия]" v-model="person.description" class="q-ma-md" autogrow/>
+
           <q-tabs v-model="tabModel">
+            <q-tab name="settings" label="* Settings"/>
             <q-tab name="responses" label="> Responses"/>
             <q-tab name="functions" label="$Functions()"/>
             <q-tab name="datasets" label="#Datasets#"/>
@@ -86,6 +86,18 @@
           </q-tabs>
 
           <q-tab-panels v-model="tabModel">
+            <q-tab-panel name="settings">
+              <q-input dense stack-label label="Название" placeholder="[Без названия]" v-model="person.title" class="q-ma-md"/>
+              <q-input dense stack-label label="Описание" placeholder="[Без названия]" v-model="person.description" class="q-ma-md" autogrow/>
+              <q-separator/>
+              <q-toggle v-model="extendedSettings" label="Интеграция"/>
+              <q-card v-show="extendedSettings" class="q-pa-md">
+                <q-input v-model="externalServer" label="Сервер" stack-label outlined/><br/>
+                <q-toggle v-model="externalAnswer" :label="'Подменять ответ (' + externalServer + '/answer=XXX)'"/><br/>
+                <q-toggle v-model="externalPreprocess" :label="'Подменять предобработку (' + externalServer + '/preprocess=XXX)'"/><br/>
+                <q-toggle v-model="externalPostprocess" :label="'Подменять постобработку (' + externalServer + '/postprocess=XXX)'"/>
+              </q-card>
+            </q-tab-panel>
             <q-tab-panel name="responses">
               <Responses :content="person.content"/>
               <q-btn icon="add" color="positive" flat size="md" @click="person.content.responses.push({input: '', output: ''})"/>
@@ -155,6 +167,7 @@ export default defineComponent({
       leftDrawerOpen: false,
       rightDrawerOpen: false,
       tabModel: 'responses',
+      extendedSettings: false,
       newMessage: '',
       user: Cookies.get('user')
     }
