@@ -18,7 +18,7 @@
       <q-list>
         <q-item clickable @click="newBot()">
           <q-item-section side>
-            <q-icon name="add"/>
+            <q-icon name="add" color="positive"/>
           </q-item-section>
           <q-item-section>
             Новый робот
@@ -27,7 +27,7 @@
         <q-separator/>
         <q-item clickable @click="downloadBot()">
           <q-item-section side>
-            <q-icon name="upload"/>
+            <q-icon name="upload" color="blue"/>
           </q-item-section>
           <q-item-section>
             Экспорт робота в файл
@@ -35,15 +35,15 @@
         </q-item>
         <q-item clickable disable>
           <q-item-section side>
-            <q-icon name="download"/>
+            <q-icon name="download" color="blue"/>
           </q-item-section>
           <q-item-section>
             Импорт робота из файла
           </q-item-section>
         </q-item>
-        <q-item clickable @click="showHistory()">
+        <q-item clickable @click="newWindow('/#/history/?id=' + person.GUID)">
           <q-item-section side>
-            <q-icon name="history"/>
+            <q-icon name="history" color="blue"/>
           </q-item-section>
           <q-item-section>
             История чатов
@@ -51,33 +51,53 @@
         </q-item>
         <q-item clickable @click="removeBot()">
           <q-item-section side>
-            <q-icon name="remove"/>
+            <q-icon name="remove" color="blue"/>
           </q-item-section>
           <q-item-section>
             Удалить этого робота
           </q-item-section>
         </q-item>
-        <q-item clickable @click="openBotPreview()">
+        <q-item clickable @click="newWindow('/#/bot/?id=' + person.GUID)">
           <q-item-section side>
-            <q-icon name="preview"/>
+            <q-icon name="preview" color="blue"/>
           </q-item-section>
           <q-item-section>
-            Просмотр
+            Просмотр бота
           </q-item-section>
         </q-item>
          <q-separator/>
-        <q-item clickable @click="techSupport()">
+        <q-item clickable @click="newWindow('https://jatbot.neurobotics.ru/#/bot/?id=36A7B904-E465-4664-8A1F-46C74BF7')">
             <q-item-section side>
-              <q-icon name="support_agent"/>
+              <q-icon name="support_agent" color="black"/>
             </q-item-section>
             <q-item-section>
               Тех.поддержка
           </q-item-section>
         </q-item>
+         <q-item clickable @click="newWindow('https://github.com/Neurobotics/jatbot/')">
+            <q-item-section side>
+              <q-avatar square size="24px" >
+                <img src="github.svg"/>
+              </q-avatar>
+            </q-item-section>
+            <q-item-section>
+              Код на GitHub
+          </q-item-section>
+        </q-item>
+        <q-item clickable @click="newWindow('https://neurobotics.ru')">
+            <q-item-section side>
+              <q-avatar square size="24px" >
+                <img src="neurobotics-logo-badge.svg" />
+              </q-avatar>
+            </q-item-section>
+            <q-item-section>
+              Neurobotics: Alma mater
+          </q-item-section>
+        </q-item>
       <q-separator/>
         <q-item clickable @click="logout()">
           <q-item-section side>
-            <q-icon name="logout"/>
+            <q-icon name="logout" color="red"/>
           </q-item-section>
           <q-item-section>
             Выйти
@@ -162,7 +182,6 @@
 
 <script>
 import { defineComponent } from 'vue'
-// import NTJSON from 'src/ntoolkit/json'
 import Responses from 'src/components/Responses.vue'
 import DataSets from 'src/components/DataSets.vue'
 import Functions from 'src/components/Functions.vue'
@@ -246,9 +265,6 @@ export default defineComponent({
         window.location.reload()
       })
     },
-    techSupport: function () {
-      window.open('https://jatbot.neurobotics.ru/#/bot/?id=36A7B904-E465-4664-8A1F-46C74BF7', '_blank')
-    },
     removeBot: function () {
       if (!this.person) return
       Dialog.create({
@@ -293,11 +309,8 @@ export default defineComponent({
         // console.log(res.data)
       })
     },
-    openBotPreview: function () {
-      window.open('/#/bot/?id=' + this.person.GUID, '_blank')
-    },
-    showHistory: function () {
-      window.open('/#/history/?id=' + this.person.GUID, '_blank')
+    newWindow: function (url) {
+      window.open(url, '_blank')
     }
   },
   computed: {
