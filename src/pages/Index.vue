@@ -16,7 +16,7 @@
 
     <q-drawer v-model="leftDrawerOpen" side="left" bordered style="background: #CCC">
       <q-list>
-        <q-item clickable disable>
+        <q-item clickable @click="newBot()">
           <q-item-section side>
             <q-icon name="add"/>
           </q-item-section>
@@ -41,7 +41,7 @@
             Импорт робота из файла
           </q-item-section>
         </q-item>
-        <q-item clickable disable>
+        <q-item clickable @click="removeBot()">
           <q-item-section side>
             <q-icon name="remove"/>
           </q-item-section>
@@ -150,6 +150,7 @@ import Functions from 'src/components/Functions.vue'
 import Login from 'src/components/Login.vue'
 import Cookies from 'js-cookie'
 import BotMixin from 'src/components/BotMixin.vue'
+import { Dialog } from 'quasar'
 
 export default defineComponent({
   name: 'PageIndex',
@@ -252,6 +253,23 @@ export default defineComponent({
       a.href = window.URL.createObjectURL(new Blob([JSON.stringify(this.person, null, 2)], { type: 'text/plain' }))
       a.download = this.person.title + '.json'
       a.click()
+    },
+    newBot: function () {
+      //
+    },
+    removeBot: function () {
+      if (!this.person) return
+      Dialog.create({
+        message: 'Удалить бота "' + this.person.title + '"?',
+        cancel: true,
+        persistent: true
+      }).onOk(() => {
+        const u = this.serverUrl + 'person&operation=remove&GUID=' + this.person.GUID + '&user=' + this.user
+        // console.log(params)
+        this.$axios.get(u).then(res => {
+          window.location.reload()
+        })
+      })
     },
     prepareForSave: function (txt) {
       return txt.replaceAll('"', '\\"').replaceAll('\'', '\\\'')
