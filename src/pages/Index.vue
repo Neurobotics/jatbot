@@ -41,6 +41,14 @@
             Импорт робота из файла
           </q-item-section>
         </q-item>
+        <q-item clickable @click="showHistory()">
+          <q-item-section side>
+            <q-icon name="history"/>
+          </q-item-section>
+          <q-item-section>
+            История чатов
+          </q-item-section>
+        </q-item>
         <q-item clickable @click="removeBot()">
           <q-item-section side>
             <q-icon name="remove"/>
@@ -308,6 +316,9 @@ export default defineComponent({
     },
     openBotPreview: function () {
       window.open('/#/bot/?id=' + this.person.GUID, '_blank')
+    },
+    showHistory: function () {
+      window.open('/#/history/?id=' + this.person.GUID, '_blank')
     }
   },
   computed: {
