@@ -45,7 +45,6 @@ export const Jat = {
     if (existing.length > 0) {
       existing = existing[0]
     } else {
-      console.log('new rand')
       existing = new Randomizer(data)
       this.randomizers.push(existing)
     }

@@ -11,10 +11,14 @@ export default defineComponent({
       messageLog: '',
       messages: [],
       messageCount: 0,
-      externalPreprocess: false,
-      externalPostprocess: false,
-      externalAnswer: false,
-      externalServer: 'http://127.0.0.1:1807',
+      defaultSettings: {
+        integration: false,
+        externalPreprocess: false,
+        externalPostprocess: false,
+        externalAnswer: false,
+        externalServer: 'http://127.0.0.1:1807',
+        startPhrase: 'Напишите что-нибудь'
+      },
       sid: this.newGuid()
     }
   },
@@ -43,6 +47,11 @@ export default defineComponent({
       const c = x.content.replaceAll("\n", "<br/>")
       x.description = x.description ? this.manageNewlines(x.description) : ''
       const content = NTJSON.parseSafe(c)
+      const settings = NTJSON.parseSafe(x.settings)
+      x.settings = typeof settings.integration !== 'undefined' ? settings : this.defaultSettings
+      if (typeof x.settings.startPhrase === 'undefined') {
+        x.settings.startPhrase = this.defaultSettings.startPhrase
+      }
       if (!content.responses) content.responses = []
       content.responses.forEach(r => {
         r.enabled = typeof r.enabled !== 'undefined' ? r.enabled : true
@@ -69,7 +78,6 @@ export default defineComponent({
     makeHistory: function (input, txt) {
       const line = (input ? '>' : '<') + ' [' + NTDateTime.formatYmdHis(new Date()) + '] ' + txt
       const data = {}
-      // data.log = line
       this.$axios({
         url: this.serverUrl + 'person_history&sid=' + this.sid + '&person=' + this.person.GUID + '&user=' + this.user + '&log=' + line,
         method: 'POST',
@@ -93,8 +101,8 @@ export default defineComponent({
         funcLocalPostproc(m, ans2)
       }
 
-      if (this.externalAnswer) {
-        this.$axios.get(this.externalServer + '?answer=' + msg).then(res => {
+      if (this.person.settings.externalAnswer) {
+        this.$axios.get(this.person.settings.externalServer + '?answer=' + msg).then(res => {
           funcLocalPostproc(msg, res.data)
         }).catch(() => {
           funcLocalAnswer(msg)
@@ -216,10 +224,8 @@ export default defineComponent({
           let result = ''
           try {
             const arg = inc.substring(inclusion.length, inc.length - 1)
-            console.log('arg', arg)
             const ans = f(arg)
             result = ans
-            console.log('return', ans)
           } catch (e) {
             console.error(e)
           }

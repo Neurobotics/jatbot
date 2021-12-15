@@ -66,6 +66,15 @@
           </q-item-section>
         </q-item>
          <q-separator/>
+        <q-item clickable @click="techSupport()">
+            <q-item-section side>
+              <q-icon name="support_agent"/>
+            </q-item-section>
+            <q-item-section>
+              Тех.поддержка
+          </q-item-section>
+        </q-item>
+      <q-separator/>
         <q-item clickable @click="logout()">
           <q-item-section side>
             <q-icon name="logout"/>
@@ -96,14 +105,16 @@
           <q-tab-panels v-model="tabModel">
             <q-tab-panel name="settings">
               <q-input dense stack-label label="Название" placeholder="[Без названия]" v-model="person.title" class="q-ma-md"/>
-              <q-input dense stack-label label="Описание" placeholder="[Без названия]" v-model="person.description" class="q-ma-md" autogrow/>
+              <q-input dense stack-label label="Описание" placeholder="[Без описания]" v-model="person.description" class="q-ma-md" autogrow/>
               <q-separator/>
-              <q-toggle v-model="extendedSettings" label="Интеграция"/>
-              <q-card v-show="extendedSettings" class="q-pa-md">
-                <q-input v-model="externalServer" label="Сервер" stack-label outlined/><br/>
-                <q-toggle v-model="externalAnswer" :label="'Подменять ответ (' + externalServer + '/answer=XXX)'"/><br/>
-                <q-toggle v-model="externalPreprocess" :label="'Подменять предобработку (' + externalServer + '/preprocess=XXX)'"/><br/>
-                <q-toggle v-model="externalPostprocess" :label="'Подменять постобработку (' + externalServer + '/postprocess=XXX)'"/>
+              <q-input dense stack-label label="Приветственная фраза" placeholder="[Первая фраза в чате]" v-model="person.settings.startPhrase" class="q-ma-md" autogrow/>
+              <q-separator/>
+              <q-toggle v-model="person.settings.integration" label="Интеграция"/>
+              <q-card v-show="person.settings.integration" class="q-pa-md">
+                <q-input v-model="person.settings.externalServer" label="Сервер" stack-label outlined/><br/>
+                <q-toggle v-model="person.settings.externalAnswer" :label="'Подменять ответ (' + person.settings.externalServer + '/answer=XXX)'"/><br/>
+                <q-toggle v-model="person.settings.externalPreprocess" :label="'Подменять предобработку (' + person.settings.externalServer + '/preprocess=XXX)'"/><br/>
+                <q-toggle v-model="person.settings.externalPostprocess" :label="'Подменять постобработку (' + person.settings.externalServer + '/postprocess=XXX)'"/>
               </q-card>
             </q-tab-panel>
             <q-tab-panel name="responses">
@@ -124,7 +135,7 @@
              <q-tab-panel name="processing">
                 <div>
                 function preprocess (input) {
-                <q-input v-model="person.content.preprocess" outlined/>
+                <q-input v-model="person.content.preprocess" autogrow outlined/>
                 }
                 </div>
                 <br/>
@@ -151,7 +162,7 @@
 
 <script>
 import { defineComponent } from 'vue'
-import NTJSON from 'src/ntoolkit/json'
+// import NTJSON from 'src/ntoolkit/json'
 import Responses from 'src/components/Responses.vue'
 import DataSets from 'src/components/DataSets.vue'
 import Functions from 'src/components/Functions.vue'
@@ -198,31 +209,7 @@ export default defineComponent({
     this.$axios.get(this.serverUrl + 'person&operation=list' + '&user=' + this.user).then(res => {
       const persons = res.data.persons
       persons.forEach(x => {
-        // eslint-disable-next-line
-        const c = x.content.replaceAll("\n", "<br/>")
-        x.description = x.description ? this.manageNewlines(x.description) : ''
-        const content = NTJSON.parseSafe(c)
-        if (!content.responses) content.responses = []
-        content.responses.forEach(r => {
-          r.enabled = typeof r.enabled !== 'undefined' ? r.enabled : true
-          r.input = r.input ? this.manageNewlines(r.input) : ''
-          r.output = r.output ? this.manageNewlines(r.output) : ''
-        })
-        if (!content.functions) content.functions = []
-        content.functions.forEach(f => {
-          f.title = f.title ? f.title : ''
-          f.code = f.code ? this.manageNewlines(f.code) : ''
-          f.args = f.args ? this.manageNewlines(f.args) : ''
-        })
-        if (!content.datasets) content.datasets = []
-        content.datasets.forEach(d => {
-          d.title = d.title ? d.title : ''
-          d.entries = d.entries ? this.manageNewlines(d.entries) : ''
-        })
-        content.unanswers = content.unanswers ? this.manageNewlines(content.unanswers) : ''
-        content.preprocess = content.preprocess ? this.manageNewlines(content.preprocess) : ''
-        content.postprocess = content.postprocess ? this.manageNewlines(content.postprocess) : ''
-        x.content = content
+        x = this.parseBotJson(x)
       })
       this.persons = persons
       if (persons.length > 0) {
@@ -231,7 +218,6 @@ export default defineComponent({
     })
     window.addEventListener('keydown', e => {
       if (e.ctrlKey && e.code === 'KeyS') {
-        console.log('save')
         e.preventDefault()
         this.save()
       }
@@ -246,14 +232,6 @@ export default defineComponent({
         }, 300)
       }
     }, 10000)
-    // setInterval(() => {
-    //   this.$axios.get('http://127.0.0.1:40810/vols').then(res => {
-    //     console.log(res.data)
-    //     if (res.data.text) {
-    //       this.parseMessage(res.data.text)
-    //     }
-    //   })
-    // }, 100)
   },
   methods: {
     downloadBot: function () {
@@ -268,6 +246,9 @@ export default defineComponent({
         window.location.reload()
       })
     },
+    techSupport: function () {
+      window.open('https://jatbot.neurobotics.ru/#/bot/?id=36A7B904-E465-4664-8A1F-46C74BF7', '_blank')
+    },
     removeBot: function () {
       if (!this.person) return
       Dialog.create({
@@ -276,7 +257,6 @@ export default defineComponent({
         persistent: true
       }).onOk(() => {
         const u = this.serverUrl + 'person&operation=remove&GUID=' + this.person.GUID + '&user=' + this.user
-        // console.log(params)
         this.$axios.get(u).then(res => {
           window.location.reload()
         })
@@ -296,8 +276,8 @@ export default defineComponent({
       params.GUID = p.GUID
       params.title = p.title
       params.description = p.description
-      // console.log(p.content.responses)
       params.content = JSON.stringify(p.content).replaceAll('"', '\\"').replaceAll('\'', '\\\'')
+      params.settings = JSON.stringify(p.settings)
       return params
     },
     save: function () {
@@ -305,13 +285,12 @@ export default defineComponent({
       if (p === null) return
       const params = new URLSearchParams(p)
       const u = this.serverUrl + 'person&operation=save&GUID=' + this.person.GUID
-      // console.log(params)
       this.$axios({
         url: u,
         method: 'post',
         data: params
       }).then(res => {
-        console.log(res.data)
+        // console.log(res.data)
       })
     },
     openBotPreview: function () {

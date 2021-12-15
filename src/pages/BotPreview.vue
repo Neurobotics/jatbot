@@ -61,10 +61,8 @@ export default defineComponent({
     }
   },
   mounted () {
-    this.messages.push({ text: 'Напишите что-нибудь', user: false, time: new Date(), index: 0 })
     if (this.$route.query.id) {
       this.id = this.$route.query.id
-      console.log(this.id)
       this.$axios.get(this.serverUrl + 'person&operation=get' + '&id=' + this.id).then(res => {
         let x = null
         if (res.data && res.data.bot && res.data.bot.length > 0) {
@@ -72,6 +70,7 @@ export default defineComponent({
           x = this.parseBotJson(x)
         }
         this.person = x
+        this.messages.push({ text: x.settings.startPhrase, user: false, time: new Date(), index: 0 })
       })
     }
     this.init()
