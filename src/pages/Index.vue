@@ -74,6 +74,14 @@
               Тех.поддержка
           </q-item-section>
         </q-item>
+        <q-item clickable @click="newWindow('/ChangeLog.txt')">
+            <q-item-section side>
+              <q-icon name="star" color="black"/>
+            </q-item-section>
+            <q-item-section>
+              Список изменений (ChangeLog)
+          </q-item-section>
+        </q-item>
          <q-item clickable @click="newWindow('https://github.com/Neurobotics/jatbot/')">
             <q-item-section side>
               <q-avatar square size="24px" >
