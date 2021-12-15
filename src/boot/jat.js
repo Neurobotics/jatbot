@@ -52,7 +52,19 @@ export const Jat = {
   },
 
   getRandomFromLines: function (multiline) {
-    return this.getRandom(multiline.split('\n'))
+    return this.getRandom(this.splitNotEmpty(multiline))
+  },
+
+  splitNotEmpty: function (multiline) {
+    const list = []
+    const splits = multiline.split('\n')
+    splits.forEach(x => {
+      x = x.trim()
+      if (x !== '') {
+        list.push(x)
+      }
+    })
+    return list
   }
 }
 

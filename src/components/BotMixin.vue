@@ -84,17 +84,20 @@ export default defineComponent({
         data: data
       })
     },
+    addMessage: function (txt, isFromUser) {
+      this.messageLog = '<div class="' + (isFromUser ? 'input' : 'output') + '">&gt; ' + txt + '</div>' + this.messageLog
+      this.messages.push({ text: txt, user: isFromUser, time: new Date(), index: this.messageCount++ })
+      this.makeHistory(isFromUser, txt)
+    },
     parseMessage: function (val) {
       const msg = this.performPreprocess(val)
 
-      this.messageLog = '<div class="input">&gt; ' + msg + '</div>' + this.messageLog
-      this.messages.push({ text: msg, user: true, time: new Date(), index: this.messageCount++ })
-      this.makeHistory(true, msg)
+      this.addMessage(msg, true)
+
       const funcLocalPostproc = (m, ans) => {
         const ans3 = this.performPostprocess(m, ans)
-        this.messageLog = '<div class="output">' + ans3 + '</div>' + this.messageLog
-        this.messages.push({ text: ans3, user: false, time: new Date(), index: this.messageCount++ })
-        this.makeHistory(false, ans3)
+        this.addMessage(ans3, false)
+        this.$mitt.emit('answer', ans3)
       }
       const funcLocalAnswer = (m) => {
         const ans2 = this.performAnswer(m)
@@ -164,6 +167,24 @@ export default defineComponent({
           }
         }
         if (foundAnswer) break
+      }
+      // Looking for responses inside input
+      if (!foundAnswer) {
+        for (let i = 0; i < n; i++) {
+          const r = responses[i]
+          if (r.enabled === false) continue
+          const inputs = r.input.split('\n')
+          for (let j = 0; j < inputs.length; j++) {
+            const input = inputs[j].toLowerCase().trim()
+            if (input === '') continue
+            if (input.indexOf(msg) >= 0) {
+              foundAnswer = true
+              answer = this.$jat.getRandomFromLines(r.output)
+              break
+            }
+          }
+          if (foundAnswer) break
+        }
       }
       // Looking for responses inside input
       if (!foundAnswer) {
