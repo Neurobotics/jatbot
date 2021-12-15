@@ -21,6 +21,14 @@
           <div id="bottom"></div>
             </div>
         </q-page-container>
+
+         <q-page-sticky position="bottom-right" :offset="[5, 5]">
+            <q-btn icon="voice_over_off" round color="grey" flat @click="useTTS = true" v-if="!useTTS" class="q-mb-sm"/>
+            <q-btn icon="record_voice_over" round color="blue" @click="useTTS = false" v-if="useTTS" class="q-mb-sm"/><br/>
+            <q-btn icon="mic" round color="accent" @click="record()" v-if="!isRecording"/>
+            <q-btn icon="stop" round color="red" @click="stop()" v-if="isRecording"/>
+         </q-page-sticky>
+
         <q-footer class="q-pa-xs bg-grey">
           <div class="row">
 
@@ -30,10 +38,6 @@
             <div class="col-auto q-pl-xs">
               <q-btn icon="send" round color="positive" @click="sendMessage()"/>
             </div>
-            <!-- <div class="col-auto q-pl-md">
-              <q-btn icon="mic" round color="white" flat @click="record()" v-if="!isRecording"/>
-              <q-btn icon="stop" round color="red" @click="stop()" v-if="isRecording"/>
-          </div> -->
           </div>
         </q-footer>
       </q-layout>
@@ -57,7 +61,9 @@ export default defineComponent({
       mediaRecorder: null,
       chunks: [],
       audios: [],
-      isRecording: false
+      isRecording: false,
+      useTTS: true,
+      ttsAudio: null
     }
   },
   mounted () {
@@ -74,6 +80,12 @@ export default defineComponent({
       })
     }
     this.init()
+    this.$mitt.on('answer', (txt) => {
+      console.log('answer', txt)
+      if (this.useTTS) {
+        this.tts(txt)
+      }
+    })
   },
   methods: {
     scrollB: function () {
@@ -84,6 +96,29 @@ export default defineComponent({
       this.parseMessage(this.newMessage)
       this.newMessage = ''
       this.scrollB()
+    },
+    stt: function (blob) {
+      const url = 'https://neurobotics.ru/ajax/recognition.php?lang=ru-RU&format=b64'
+      const reader = new FileReader()
+      reader.readAsDataURL(blob)
+      reader.onloadend = () => {
+        const base64data = reader.result
+        console.log(base64data)
+        this.$axios.post(url, base64data.split('base64,')[1]).then(res => {
+          const txt = res.data.result
+          if (txt !== '') this.parseMessage(txt)
+          else this.addMessage('[неразборчиво]', true)
+        })
+      }
+    },
+    tts: function (text) {
+      const url = 'https://neurobotics.ru/ajax/speech.php?text=' + text
+      if (!this.ttsAudio) {
+        this.ttsAudio = new Audio()
+        this.ttsAudio.autoplay = true
+      }
+      this.ttsAudio.src = url
+      this.ttsAudio.play()
     },
     init: function () {
       if (navigator.mediaDevices.getUserMedia) {
@@ -98,6 +133,9 @@ export default defineComponent({
               const audioURL = window.URL.createObjectURL(blob)
               this.chunks = []
               this.audios.push(audioURL)
+              console.log(blob)
+              console.log(audioURL)
+              this.stt(blob)
             }
           })
           .catch(function (err) {
