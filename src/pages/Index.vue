@@ -27,7 +27,7 @@
         <q-separator/>
         <q-item clickable @click="downloadBot()">
           <q-item-section side>
-            <q-icon name="download"/>
+            <q-icon name="upload"/>
           </q-item-section>
           <q-item-section>
             Экспорт робота в файл
@@ -35,7 +35,7 @@
         </q-item>
         <q-item clickable disable>
           <q-item-section side>
-            <q-icon name="upload"/>
+            <q-icon name="download"/>
           </q-item-section>
           <q-item-section>
             Импорт робота из файла

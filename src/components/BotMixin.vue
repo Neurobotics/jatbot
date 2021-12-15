@@ -1,6 +1,7 @@
 <script>
 import { defineComponent } from 'vue'
 import NTJSON from 'src/ntoolkit/json'
+import NTDateTime from 'src/ntoolkit/datetime'
 
 export default defineComponent({
   data: function () {
@@ -13,10 +14,26 @@ export default defineComponent({
       externalPreprocess: false,
       externalPostprocess: false,
       externalAnswer: false,
-      externalServer: 'http://127.0.0.1:1807'
+      externalServer: 'http://127.0.0.1:1807',
+      sid: this.newGuid()
     }
   },
   methods: {
+    newGuid: function () {
+      let d = new Date().getTime() // Timestamp
+      let d2 = ((typeof performance !== 'undefined') && performance.now && (performance.now() * 1000)) || 0 // Time in microseconds since page-load or 0 if unsupported
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        let r = Math.random() * 16 // random number between 0 and 16
+        if (d > 0) { // Use timestamp until depleted
+          r = (d + r) % 16 | 0
+          d = Math.floor(d / 16)
+        } else { // Use microseconds since page-load if supported
+          r = (d2 + r) % 16 | 0
+          d2 = Math.floor(d2 / 16)
+        }
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+      })
+    },
     manageNewlines: function (txt) {
       // eslint-disable-next-line
       return txt.replaceAll('<br/>', "\n")
@@ -49,16 +66,27 @@ export default defineComponent({
       x.content = content
       return x
     },
+    makeHistory: function (input, txt) {
+      const line = (input ? '>' : '<') + ' [' + NTDateTime.formatYmdHis(new Date()) + '] ' + txt
+      const data = {}
+      // data.log = line
+      this.$axios({
+        url: this.serverUrl + 'person_history&sid=' + this.sid + '&person=' + this.person.GUID + '&user=' + this.user + '&log=' + line,
+        method: 'POST',
+        data: data
+      })
+    },
     parseMessage: function (val) {
       const msg = this.performPreprocess(val)
 
       this.messageLog = '<div class="input">&gt; ' + msg + '</div>' + this.messageLog
       this.messages.push({ text: msg, user: true, time: new Date(), index: this.messageCount++ })
-
+      this.makeHistory(true, msg)
       const funcLocalPostproc = (m, ans) => {
         const ans3 = this.performPostprocess(m, ans)
         this.messageLog = '<div class="output">' + ans3 + '</div>' + this.messageLog
         this.messages.push({ text: ans3, user: false, time: new Date(), index: this.messageCount++ })
+        this.makeHistory(false, ans3)
       }
       const funcLocalAnswer = (m) => {
         const ans2 = this.performAnswer(m)
