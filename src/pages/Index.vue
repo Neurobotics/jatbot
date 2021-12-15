@@ -255,7 +255,10 @@ export default defineComponent({
       a.click()
     },
     newBot: function () {
-      //
+      const u = this.serverUrl + 'person&operation=create&user=' + this.user
+      this.$axios.get(u).then(res => {
+        window.location.reload()
+      })
     },
     removeBot: function () {
       if (!this.person) return
