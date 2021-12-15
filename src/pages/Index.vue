@@ -77,7 +77,7 @@
          <q-item clickable @click="newWindow('https://github.com/Neurobotics/jatbot/')">
             <q-item-section side>
               <q-avatar square size="24px" >
-                <img src="github.svg"/>
+                <img src="icons/github.svg"/>
               </q-avatar>
             </q-item-section>
             <q-item-section>
@@ -87,7 +87,7 @@
         <q-item clickable @click="newWindow('https://neurobotics.ru')">
             <q-item-section side>
               <q-avatar square size="24px" >
-                <img src="neurobotics-logo-badge.svg" />
+                <img src="icons/neurobotics-logo-badge.svg" style="width: 20px; height: 20px;"/>
               </q-avatar>
             </q-item-section>
             <q-item-section>
@@ -104,10 +104,6 @@
           </q-item-section>
         </q-item>
       </q-list>
-    </q-drawer>
-
-    <q-drawer v-model="rightDrawerOpen" side="right" bordered style="background: #CCC">
-      <!-- drawer content -->
     </q-drawer>
 
     <q-page-container>
