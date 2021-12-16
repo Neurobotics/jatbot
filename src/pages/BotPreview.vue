@@ -76,7 +76,7 @@ export default defineComponent({
           x = this.parseBotJson(x)
         }
         this.person = x
-        this.messages.push({ text: x.settings.startPhrase, user: false, time: new Date(), index: 0 })
+        this.messages.push({ text: this.applyFunctions(this.applyDS(x.settings.startPhrase)), user: false, time: new Date(), index: 0 })
       })
     }
     this.init()
