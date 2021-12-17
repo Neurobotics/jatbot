@@ -33,7 +33,7 @@
             Экспорт робота в файл
           </q-item-section>
         </q-item>
-        <q-item clickable disable>
+        <q-item clickable @click="openImportDialog = true">
           <q-item-section side>
             <q-icon name="download" color="blue"/>
           </q-item-section>
@@ -67,11 +67,11 @@
         </q-item>
          <q-separator/>
         <q-item clickable @click="newWindow('https://jatbot.neurobotics.ru/#/bot/?id=36A7B904-E465-4664-8A1F-46C74BF7')">
-            <q-item-section side>
-              <q-icon name="support_agent" color="black"/>
-            </q-item-section>
-            <q-item-section>
-              Тех.поддержка
+          <q-item-section side>
+            <q-icon name="support_agent" color="black"/>
+          </q-item-section>
+          <q-item-section>
+            Тех.поддержка
           </q-item-section>
         </q-item>
         <q-item clickable @click="newWindow('/ChangeLog.txt')">
@@ -182,6 +182,8 @@
   <q-layout v-else>
     <Login/>
   </q-layout>
+
+  <ImportDialog :openImportDialog="openImportDialog"/>
 </template>
 
 <script>
@@ -193,6 +195,8 @@ import Login from 'src/components/Login.vue'
 import Cookies from 'js-cookie'
 import BotMixin from 'src/components/BotMixin.vue'
 import { Dialog } from 'quasar'
+import ImportDialog from 'src/dialogs/ImportDialog.vue'
+import NTJSON from 'src/ntoolkit/json'
 
 export default defineComponent({
   name: 'PageIndex',
@@ -200,7 +204,8 @@ export default defineComponent({
     Responses,
     DataSets,
     Functions,
-    Login
+    Login,
+    ImportDialog
   },
   mixins: [BotMixin],
   data: function () {
@@ -212,7 +217,8 @@ export default defineComponent({
       tabModel: 'responses',
       extendedSettings: false,
       newMessage: '',
-      user: Cookies.get('user')
+      user: Cookies.get('user'),
+      openImportDialog: false
     }
   },
   watch: {
@@ -222,6 +228,7 @@ export default defineComponent({
         const p = this.persons.filter(x => x.GUID === this.personGUID)
         if (p.length > 0) {
           this.person = p[0]
+          Cookies.set('person', this.personGUID)
         } else {
           this.person = null
         }
@@ -236,7 +243,15 @@ export default defineComponent({
       })
       this.persons = persons
       if (persons.length > 0) {
-        this.personGUID = persons[0].GUID
+        let index = 0
+        const cookieGuid = Cookies.get('person')
+        for (let i = 0; i < persons.length; i++) {
+          if (persons[i].GUID === cookieGuid) {
+            index = i
+            break
+          }
+        }
+        this.personGUID = persons[index].GUID
       }
     })
     window.addEventListener('keydown', e => {
@@ -255,18 +270,45 @@ export default defineComponent({
         }, 300)
       }
     }, 10000)
+
+    this.$mitt.on('imported', (data) => {
+      this.openImportDialog = false
+      if (data.imported) {
+        if (data.importType === 'new') {
+          this.newBot(data.bot)
+        } else {
+          const guid = this.person.GUID
+          data.bot.GUID = guid
+          data.bot.user = this.user
+          this.person = data.bot
+          this.save(true)
+        }
+      }
+    })
   },
   methods: {
     downloadBot: function () {
       const a = document.createElement('a')
-      a.href = window.URL.createObjectURL(new Blob([JSON.stringify(this.person, null, 2)], { type: 'text/plain' }))
+      const p = NTJSON.clone(this.person)
+      delete p.GUID
+      delete p.user
+      a.href = window.URL.createObjectURL(new Blob([JSON.stringify(p, null, 2)], { type: 'text/plain' }))
       a.download = this.person.title + '.json'
       a.click()
     },
-    newBot: function () {
+    newBot: function (bot) {
       const u = this.serverUrl + 'person&operation=create&user=' + this.user
-      this.$axios.get(u).then(res => {
-        window.location.reload()
+      const data = {}
+      if (typeof bot !== 'undefined') {
+        data.bot = JSON.stringify(bot)
+      }
+      this.$axios({
+        url: u,
+        method: 'POST',
+        data: new URLSearchParams(data)
+      }).then(res => {
+        Cookies.set('person', res.data.guid)
+        this.reloadPage()
       })
     },
     removeBot: function () {
@@ -278,7 +320,7 @@ export default defineComponent({
       }).onOk(() => {
         const u = this.serverUrl + 'person&operation=remove&GUID=' + this.person.GUID + '&user=' + this.user
         this.$axios.get(u).then(res => {
-          window.location.reload()
+          this.reloadPage()
         })
       })
     },
@@ -287,7 +329,7 @@ export default defineComponent({
     },
     logout () {
       Cookies.set('user', '')
-      window.location.reload()
+      this.reloadPage()
     },
     getPersonJson () {
       if (!this.person) return null
@@ -300,7 +342,7 @@ export default defineComponent({
       params.settings = JSON.stringify(p.settings)
       return params
     },
-    save: function () {
+    save: function (reload) {
       const p = this.getPersonJson()
       if (p === null) return
       const params = new URLSearchParams(p)
@@ -310,11 +352,16 @@ export default defineComponent({
         method: 'post',
         data: params
       }).then(res => {
-        // console.log(res.data)
+        if (reload === true) {
+          this.reloadPage()
+        }
       })
     },
     newWindow: function (url) {
       window.open(url, '_blank')
+    },
+    reloadPage: function () {
+      window.location.reload()
     }
   },
   computed: {

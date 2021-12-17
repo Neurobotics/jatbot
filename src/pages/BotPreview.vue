@@ -81,7 +81,6 @@ export default defineComponent({
     }
     this.init()
     this.$mitt.on('answer', (txt) => {
-      console.log('answer', txt)
       if (this.useTTS) {
         this.tts(txt)
       }
@@ -103,7 +102,6 @@ export default defineComponent({
       reader.readAsDataURL(blob)
       reader.onloadend = () => {
         const base64data = reader.result
-        console.log(base64data)
         this.$axios.post(url, base64data.split('base64,')[1]).then(res => {
           const txt = res.data.result
           if (txt !== '') this.parseMessage(txt)
@@ -133,8 +131,6 @@ export default defineComponent({
               const audioURL = window.URL.createObjectURL(blob)
               this.chunks = []
               this.audios.push(audioURL)
-              console.log(blob)
-              console.log(audioURL)
               this.stt(blob)
             }
           })
