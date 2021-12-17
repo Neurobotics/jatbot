@@ -15,6 +15,7 @@
             <q-chat-message
             :name="msg.user ? 'Вы' : person.title"
             :text="[msg.text]"
+            :text-html="true"
             :stamp="dt.formatHis(msg.time)"
             :sent="msg.user"/>
           </template>
