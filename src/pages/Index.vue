@@ -14,14 +14,14 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" side="left" bordered style="background: #CCC">
+    <q-drawer v-model="leftDrawerOpen" side="left" bordered style="background: #e6e6e6">
       <q-list>
         <q-item clickable @click="newBot()">
           <q-item-section side>
             <q-icon name="add" color="positive"/>
           </q-item-section>
           <q-item-section>
-            Новый робот
+            Новый бот
           </q-item-section>
         </q-item>
         <q-separator/>
@@ -30,7 +30,7 @@
             <q-icon name="upload" color="blue"/>
           </q-item-section>
           <q-item-section>
-            Экспорт робота в файл
+            Экспорт бота в файл
           </q-item-section>
         </q-item>
         <q-item clickable @click="openImportDialog = true">
@@ -38,7 +38,7 @@
             <q-icon name="download" color="blue"/>
           </q-item-section>
           <q-item-section>
-            Импорт робота из файла
+            Импорт бота из файла
           </q-item-section>
         </q-item>
         <q-item clickable @click="newWindow('/#/history/?id=' + person.GUID)">
@@ -54,7 +54,7 @@
             <q-icon name="remove" color="blue"/>
           </q-item-section>
           <q-item-section>
-            Удалить этого робота
+            Удалить этого бота
           </q-item-section>
         </q-item>
         <q-item clickable @click="newWindow('/#/bot/?id=' + person.GUID)">
@@ -131,7 +131,7 @@
               <q-input dense stack-label label="Название" placeholder="[Без названия]" v-model="person.title" class="q-ma-md"/>
               <q-input dense stack-label label="Описание" placeholder="[Без описания]" v-model="person.description" class="q-ma-md" autogrow/>
               <q-separator/>
-              <q-input dense stack-label label="Приветственная фраза" placeholder="[Первая фраза в чате]" v-model="person.settings.startPhrase" class="q-ma-md" autogrow/>
+              <q-input dense stack-label label="Приветственная фраза (теперь и с функциями)" placeholder="[Первая фраза в чате]" v-model="person.settings.startPhrase" class="q-ma-md" autogrow/>
               <q-separator/>
               <q-toggle v-model="person.settings.integration" label="Интеграция"/>
               <q-card v-show="person.settings.integration" class="q-pa-md">
